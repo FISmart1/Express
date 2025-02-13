@@ -1,22 +1,39 @@
-const express = require('express');
+//import express
+const express = require('express')
 
-const cors = require('cors');
+//import CORS
+const cors = require('cors')
 
-const bodyparser = require('body-parser');
+//import bodyParser
+const bodyParser = require('body-parser')
 
-const app = express();
+//import router
+const router = require('./routes')
 
+//init app
+const app = express()
+
+//use cors
+app.use(cors())
+
+//use body parser
+app.use(bodyParser.urlencoded({ extended: false }))
+
+// parse application/json
+app.use(bodyParser.json())
+
+//define port
 const port = 3000;
 
-app.use(bodyparser.urlencoded({extended: false}))
-
-app.use(bodyparser.json())
-
-app.use(cors());
+//route
 app.get('/', (req, res) => {
-    res.send('Hello, World!');
+  res.send('Hello World!')
 })
 
+//define routes
+app.use('/api', router);
+
+//start server
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
+    console.log(`Server started on port ${port}`);
+})
