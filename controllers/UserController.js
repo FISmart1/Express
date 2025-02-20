@@ -107,7 +107,7 @@ const findUserById = async (req, res) => {
         //send response
         res.status(200).send({
             success: true,
-            message: `Get user By ID :${id}`,
+            message: `Get user By ID :${id}`,  
             data: user,
         });
 
