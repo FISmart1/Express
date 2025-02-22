@@ -2,7 +2,8 @@
 const express = require("express");
 
 //import prisma client
-const prisma = require("../prisma/client");
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // Import validationResult from express-validator
 const { validationResult } = require("express-validator");
@@ -26,6 +27,13 @@ const findUsers = async (req, res) => {
             },
         });
 
+        if (!users) {
+            return res.status(404).send({
+                success: false,
+                message: "User not found",
+            });
+        }
+
         //send response
         res.status(200).send({
             success: true,
@@ -43,25 +51,9 @@ const findUsers = async (req, res) => {
 
 //function createUser
 const createUser = async (req, res) => {
-
-    // Periksa hasil validasi
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-        // Jika ada error, kembalikan error ke pengguna
-        return res.status(422).json({
-            success: false,
-            message: "Validation error",
-            errors: errors.array(),
-        });
-    }
-
-    //hash password
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
-
     try {
+        const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
-        //insert data
         const user = await prisma.user.create({
             data: {
                 name: req.body.name,
@@ -70,17 +62,22 @@ const createUser = async (req, res) => {
             },
         });
 
-        res.status(201).send({
+        const { password, ...userWithoutPassword } = user;
+
+        res.status(201).json({
             success: true,
             message: "User created successfully",
-            data: user,
+            data: userWithoutPassword,
         });
-
     } catch (error) {
-        res.status(500).send({
+        console.error("Error creating user:", error);
+        res.status(500).json({
             success: false,
             message: "Internal server error",
+            error: error.message,
         });
+    } finally {
+        await prisma.$disconnect();
     }
 };
 
@@ -104,10 +101,17 @@ const findUserById = async (req, res) => {
             },
         });
 
+        if (!user) {
+            return res.status(404).send({
+                success: false,
+                message: "User not found",
+            });
+        }
+
         //send response
         res.status(200).send({
             success: true,
-            message: `Get user By ID :${id}`,  
+            message: `Get user By ID :${id}`,
             data: user,
         });
 
@@ -153,6 +157,13 @@ const updateUser = async (req, res) => {
                 password: hashedPassword,
             },
         });
+
+        if (!user) {
+            return res.status(404).send({
+                success: false,
+                message: "User not found",
+            });
+        }
 
         //send response
         res.status(200).send({
